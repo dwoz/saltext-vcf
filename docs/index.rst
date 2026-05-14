@@ -60,7 +60,6 @@ See :doc:`topics/configuration` for the full pillar shape.
    topics/installation
    topics/configuration
    topics/resources-framework
-   topics/parity
    topics/vks-bridge
    topics/vsan-soap
    topics/vmsp-mediated
