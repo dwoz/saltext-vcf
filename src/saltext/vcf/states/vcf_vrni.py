@@ -21,7 +21,6 @@ import logging
 import requests
 
 from saltext.vcf.clients import vrni_platform as c
-from saltext.vcf.modules import vcf_vrni as m
 
 log = logging.getLogger(__name__)
 
@@ -116,7 +115,7 @@ def installed(name, min_version=None, profile=None, deploy_spec=None):
         return ret
 
     try:
-        result = m.deploy(spec, profile=profile)
+        result = __salt__["vcf_vrni.deploy"](spec, profile=profile)  # noqa: F821
     except (RuntimeError, TimeoutError, KeyError, ValueError, LookupError) as exc:
         ret["result"] = False
         ret["comment"] = f"VRNI deploy failed: {exc}"

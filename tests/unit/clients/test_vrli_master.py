@@ -560,7 +560,7 @@ def test_bootstrap_master_raises_when_host_missing():
 
 
 def test_reset_admin_password_via_ssh_invokes_sshpass_correctly(monkeypatch):
-    """Verify the exact argv shape: sshpass -p <pw> ssh ... li-reset-... --resetAdminPassword '<pw>'."""
+    """Verify sshpass -e argv shape (password via SSHPASS env, not argv) + shlex-quoted remote pw."""
     monkeypatch.setattr(
         vrli_master.shutil, "which", lambda name: "/usr/bin/sshpass" if name == "sshpass" else None
     )
@@ -576,17 +576,22 @@ def test_reset_admin_password_via_ssh_invokes_sshpass_correctly(monkeypatch):
 
     argv = fake_run.call_args.args[0]
     assert argv[0] == "/usr/bin/sshpass"
-    assert argv[1:3] == ["-p", "VMware123!VMware123!"]
-    assert argv[3] == "ssh"
+    # -e keeps the password out of argv (was -p <password>); read from $SSHPASS instead.
+    assert argv[1] == "-e"
+    assert "VMware123!VMware123!" not in argv
+    assert argv[2] == "ssh"
     # StrictHostKeyChecking off + throwaway known-hosts (idempotent across reruns).
     assert "-o" in argv and "StrictHostKeyChecking=no" in argv
     assert "UserKnownHostsFile=/dev/null" in argv
     # Target is root@<host> — default ssh_user is 'root'.
     assert "root@25.0.0.60" in argv
-    # Final positional is the remote command with --resetAdminPassword and the new pw quoted.
+    # Final positional is the remote command with --resetAdminPassword and the new pw shlex.quoted.
     remote_cmd = argv[-1]
     assert "/opt/vmware/bin/li-reset-admin-passwd.sh" in remote_cmd
     assert "--resetAdminPassword 'NewPw!42'" in remote_cmd
+    # Password is now in the child process's environment.
+    env = fake_run.call_args.kwargs.get("env")
+    assert env is not None and env.get("SSHPASS") == "VMware123!VMware123!"
     # subprocess.run called with check=False (we surface the return code ourselves)
     # and a timeout.
     assert fake_run.call_args.kwargs.get("check") is False

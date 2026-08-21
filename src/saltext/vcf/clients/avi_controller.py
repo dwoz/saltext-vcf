@@ -34,11 +34,6 @@ _CLUSTER_VERSION = "/api/cluster/version"
 _CLUSTER = "/api/cluster"
 _CLOUD = "/api/cloud"
 _TENANT = "/api/tenant"
-# The first-boot wizard endpoint on AVI Controller: a single POST that
-# sets the admin password (rotating away from the OVF default), DNS/NTP,
-# and the backup passphrase. Documented in the AVI Controller REST guide
-# (``/swagger``) as the bootstrap entry point.
-_INITIAL_CONTROLLER_SETUP = "/api/initial-controller-setup"
 
 
 def get_version(opts, profile=None):

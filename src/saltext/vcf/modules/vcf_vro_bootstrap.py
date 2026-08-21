@@ -90,6 +90,9 @@ def _cfg(host=None, root_password=None):
             or vro_cfg.get("password")
         ),
         "requested_static_ip": vro_cfg.get("static_ip"),
+        # Probe-side knobs — override in pillar rather than hardcoding.
+        "verify_ssl": bool(vro_cfg.get("verify_ssl", False)),
+        "probe_timeout": int(vro_cfg.get("probe_timeout", 15)),
     }
 
 
@@ -454,19 +457,27 @@ def ensure_envoy_dnat(host=None, root_password=None):
         marker = f"-A {chain} -d {dest_ip}/32 -p tcp -m tcp --dport 443 -j DNAT --to-destination {target}"
         return marker in save
 
+    # ``host_ip`` and ``target`` come from parsed appliance output
+    # (``ip -4 -o addr``, ``kubectl get pods``). In practice they are
+    # bare IPs / ``ip:port`` strings so ``shlex.quote`` is a no-op, but
+    # keep the quoting so a future source with metacharacters can't
+    # break out of the remote-shell command.
+    q_host_ip = shlex.quote(host_ip)
+    q_target = shlex.quote(target)
+
     changes = []
     if not _rule_present("PREROUTING", host_ip):
         _ssh(
             host, pw,
-            f"iptables -t nat -I PREROUTING 1 -d {host_ip} -p tcp --dport 443 "
-            f"-j DNAT --to-destination {target}",
+            f"iptables -t nat -I PREROUTING 1 -d {q_host_ip} -p tcp --dport 443 "
+            f"-j DNAT --to-destination {q_target}",
         )
         changes.append(f"PREROUTING {host_ip}:443 -> {target}")
     if not _rule_present("OUTPUT", host_ip):
         _ssh(
             host, pw,
-            f"iptables -t nat -I OUTPUT 1 -d {host_ip} -p tcp --dport 443 "
-            f"-j DNAT --to-destination {target}",
+            f"iptables -t nat -I OUTPUT 1 -d {q_host_ip} -p tcp --dport 443 "
+            f"-j DNAT --to-destination {q_target}",
         )
         changes.append(f"OUTPUT {host_ip}:443 -> {target}")
 
@@ -483,10 +494,10 @@ ExecStart=/bin/sh -c '\
     HOST_IP=$(ip -4 -o addr show scope global | awk "{{print \\$4}}" | cut -d/ -f1 | head -n1); \
     ENVOY_IP=$(kubectl --kubeconfig=/etc/kubernetes/admin.conf get pods -A -o jsonpath="{{range .items[*]}}{{.status.podIP}} {{.metadata.name}}{{\\"\\n\\"}}{{end}}" | awk "/envoy/ {{print \\$1; exit}}"); \
     [ -n "$HOST_IP" ] && [ -n "$ENVOY_IP" ] || exit 0; \
-    iptables -t nat -C PREROUTING -d $HOST_IP -p tcp --dport 443 -j DNAT --to-destination $ENVOY_IP:8443 2>/dev/null || \
-    iptables -t nat -I PREROUTING 1 -d $HOST_IP -p tcp --dport 443 -j DNAT --to-destination $ENVOY_IP:8443; \
-    iptables -t nat -C OUTPUT -d $HOST_IP -p tcp --dport 443 -j DNAT --to-destination $ENVOY_IP:8443 2>/dev/null || \
-    iptables -t nat -I OUTPUT 1 -d $HOST_IP -p tcp --dport 443 -j DNAT --to-destination $ENVOY_IP:8443'
+    iptables -t nat -C PREROUTING -d "$HOST_IP" -p tcp --dport 443 -j DNAT --to-destination "$ENVOY_IP:8443" 2>/dev/null || \
+    iptables -t nat -I PREROUTING 1 -d "$HOST_IP" -p tcp --dport 443 -j DNAT --to-destination "$ENVOY_IP:8443"; \
+    iptables -t nat -C OUTPUT -d "$HOST_IP" -p tcp --dport 443 -j DNAT --to-destination "$ENVOY_IP:8443" 2>/dev/null || \
+    iptables -t nat -I OUTPUT 1 -d "$HOST_IP" -p tcp --dport 443 -j DNAT --to-destination "$ENVOY_IP:8443"'
 
 [Install]
 WantedBy=multi-user.target
@@ -528,9 +539,15 @@ def verify(host=None, root_password=None, timeout=300):
     deadline = started + int(timeout)
     last_code = None
     last_err = None
+    # ``verify`` and per-request timeout come from pillar
+    # (``saltext.vcf:vro:verify_ssl`` / ``:probe_timeout``) instead of
+    # being hardcoded — matches how other modules take TLS/verify from
+    # config.
+    verify_ssl = cfg["verify_ssl"]
+    probe_timeout = cfg["probe_timeout"]
     while time.time() < deadline:
         try:
-            r = requests.get(url, headers=headers, verify=False, timeout=15)
+            r = requests.get(url, headers=headers, verify=verify_ssl, timeout=probe_timeout)
             last_code = r.status_code
             if r.status_code == 200:
                 try:

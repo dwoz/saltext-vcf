@@ -150,7 +150,7 @@ def test_installed_present_noop(monkeypatch):
     def _fail(*a, **kw):
         raise AssertionError("deploy() should not be invoked when appliance is reachable")
 
-    monkeypatch.setattr(vro_state.vro_mod, "deploy", _fail)
+    monkeypatch.setattr(vro_mod, "deploy", _fail)
     ret = vro_state.installed(
         "vro-prod", deploy_spec=_deploy_spec(license_key="XYZ")
     )
@@ -174,7 +174,7 @@ def test_installed_absent_deploy_spec_test_mode(monkeypatch, vro_opts):
     def _fail(*a, **kw):
         raise AssertionError("deploy() should not run in test mode")
 
-    monkeypatch.setattr(vro_state.vro_mod, "deploy", _fail)
+    monkeypatch.setattr(vro_mod, "deploy", _fail)
 
     ret = vro_state.installed(
         "vro-prod", deploy_spec=_deploy_spec(license_key="LK-1")
@@ -213,7 +213,7 @@ def test_installed_absent_deploy_spec_real_mode(monkeypatch):
             "about": {"version": "9.0.0"},
         }
 
-    monkeypatch.setattr(vro_state.vro_mod, "deploy", _fake_deploy)
+    monkeypatch.setattr(vro_mod, "deploy", _fake_deploy)
 
     ret = vro_state.installed(
         "vro-prod",
@@ -258,7 +258,7 @@ def test_installed_absent_deploy_spec_real_mode_full_chain(monkeypatch):
     from saltext.vcf.clients import ovf_deploy as _ovf
     monkeypatch.setattr(_ovf, "find_vm", lambda **kw: None)
     monkeypatch.setattr(
-        vro_state.vro_mod.ia_client,
+        vro_mod.ia_client,
         "deploy_installer",
         lambda spec: {"vm_name": spec["installer_vm_name"], "powered_on": True},
     )
@@ -306,7 +306,7 @@ def test_installed_absent_no_deploy_spec_fails(monkeypatch):
     def _fail(*a, **kw):
         raise AssertionError("deploy() should not run without a deploy_spec")
 
-    monkeypatch.setattr(vro_state.vro_mod, "deploy", _fail)
+    monkeypatch.setattr(vro_mod, "deploy", _fail)
 
     ret = vro_state.installed("vro-prod")
     assert ret["result"] is False
@@ -341,7 +341,7 @@ def test_installed_absent_deploy_spec_from_pillar(monkeypatch, vro_opts):
             "about": {"version": "9.0.0"},
         }
 
-    monkeypatch.setattr(vro_state.vro_mod, "deploy", _fake_deploy)
+    monkeypatch.setattr(vro_mod, "deploy", _fake_deploy)
     ret = vro_state.installed("vro-prod")
     assert ret["result"] is True
     assert called["spec"]["installer_vm_name"] == "vro-prod"

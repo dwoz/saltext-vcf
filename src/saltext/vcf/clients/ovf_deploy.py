@@ -537,19 +537,15 @@ def _upload_disks(
             # looking at the body.
             "Overwrite": "t",
         }
-        # Stream stream-optimised VMDKs as ``Transfer-Encoding: chunked``
-        # so the NFC daemon can apply TCP-level backpressure — a fixed
-        # ``Content-Length`` PUT delivers bytes faster than the daemon
-        # drains its internal buffer, and on large disks (VRNI Platform,
-        # 4.4 GB) that has been observed to fail mid-upload with a bare
-        # ``HTTP 500 'Internal Error'`` and no useful body. Non-VMDK
-        # payloads (nvram, ISO) are small and use fixed-length as before.
+        # Send all payloads (VMDK, nvram, ISO) with a fixed ``Content-Length``.
+        # HTTP-1.1 chunked transfer breaks ESXi NFC's stream-VMDK parser on
+        # the VRNI Platform OVA: vpxa logs
+        # ``[STREAMVMDK] totBytesGrainData read:0`` after ~90s and the PUT
+        # ends with a bare ``HTTP 500 'Internal Error'``. Fixed length gets
+        # the same VMDK parsed correctly. Revisit chunked (for TCP-level
+        # backpressure on very large disks) only if a concrete failure
+        # requires it.
         reader = _CountingReader(stream, prior_sent=bytes_sent, total=total_size, progress=progress)
-        # VRNI Platform OVA's stream VMDK is misparsed by ESXi NFC when sent
-        # HTTP-1.1 chunked (vpxa logs ``[STREAMVMDK] totBytesGrainData read:0``
-        # after ~90s and returns bare HTTP 500). Fixed ``Content-Length`` gets
-        # the same VMDK parsed correctly. Keep chunked as an opt-in until we
-        # know a case where it's actually required.
         headers["Content-Length"] = str(size)
         data = reader
         resp = requests.put(url, data=data, headers=headers, verify=verify_ssl, timeout=timeout)
@@ -559,21 +555,6 @@ def _upload_disks(
                 f"NFC upload of {fi.path!r} failed: HTTP {resp.status_code} {body!r}"
             )
         bytes_sent += size
-
-
-def _chunked_iter(reader):
-    """Yield chunks from *reader* so ``requests`` uses ``Transfer-Encoding: chunked``.
-
-    ``requests`` treats any iterable as a chunked body (no fixed
-    ``Content-Length``). This lets the ESXi NFC daemon apply TCP-level
-    backpressure — required for large stream-optimised VMDK uploads to
-    vSAN where the daemon converts on the fly.
-    """
-    while True:
-        chunk = reader.read(_CHUNK)
-        if not chunk:
-            return
-        yield chunk
 
 
 def _resolve_member(member_by_path, ovf_file_path):

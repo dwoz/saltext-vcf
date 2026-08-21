@@ -39,6 +39,8 @@ transcript this flow was derived from:
 """
 
 import logging
+import os
+import shlex
 import shutil
 import subprocess
 import time
@@ -292,9 +294,9 @@ def reset_admin_password_via_ssh(
     writes a salted SHA256 hash directly into the Cassandra
     ``logdb.user_auth`` table.
 
-    Equivalent to::
+    Equivalent to (with ``SSHPASS=<root_password>`` in the environment)::
 
-        sshpass -p <root_password> ssh -o StrictHostKeyChecking=no \\
+        sshpass -e ssh -o StrictHostKeyChecking=no \\
             <ssh_user>@<host> \\
             /opt/vmware/bin/li-reset-admin-passwd.sh \\
             --resetAdminPassword '<new_admin_password>'
@@ -316,14 +318,19 @@ def reset_admin_password_via_ssh(
             "sshpass binary not found on PATH; required for the SSH "
             "admin-password reset shortcut"
         )
+    # shlex.quote so a password containing shell metacharacters (``'``,
+    # ``$``, ``;``, …) can't break out of the remote-shell arg.
     remote_cmd = (
         "/opt/vmware/bin/li-reset-admin-passwd.sh "
-        f"--resetAdminPassword '{new_admin_password}'"
+        f"--resetAdminPassword {shlex.quote(new_admin_password)}"
     )
+    # ``sshpass -e`` reads the password from ``$SSHPASS`` instead of
+    # taking it as an argv value with ``-p``; keeps it out of the
+    # process command line (``ps aux``) for the lifetime of the
+    # subprocess.
     argv = [
         sshpass,
-        "-p",
-        root_password,
+        "-e",
         "ssh",
         "-o",
         "StrictHostKeyChecking=no",
@@ -332,6 +339,8 @@ def reset_admin_password_via_ssh(
         f"{ssh_user}@{host}",
         remote_cmd,
     ]
+    env = os.environ.copy()
+    env["SSHPASS"] = root_password
     log.info(
         "vrli_master.reset_admin_password_via_ssh: running li-reset-admin-passwd.sh "
         "against %s@%s",
@@ -344,6 +353,7 @@ def reset_admin_password_via_ssh(
         text=True,
         timeout=timeout,
         check=False,
+        env=env,
     )
     if result.returncode != 0:
         raise RuntimeError(

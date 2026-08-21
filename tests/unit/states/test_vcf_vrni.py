@@ -13,6 +13,17 @@ def inject_opts(monkeypatch, opts):
     monkeypatch.setattr(state, "__opts__", opts, raising=False)
     monkeypatch.setattr(mod, "__opts__", opts, raising=False)
 
+    # State dispatches to the deploy exec-module via ``__salt__["vcf_vrni.deploy"]``.
+    # Route it back to the imported module so tests that patch ``mod.deploy`` or its
+    # internals (e.g. ``_push_ova``) still take effect.
+    class _DynamicSalt(dict):
+        def __getitem__(self, key):
+            if key == "vcf_vrni.deploy":
+                return mod.deploy
+            return super().__getitem__(key)
+
+    monkeypatch.setattr(state, "__salt__", _DynamicSalt(), raising=False)
+
 
 def _conn_error(*_a, **_kw):
     raise requests.ConnectionError("no route to host")

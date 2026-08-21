@@ -31,7 +31,6 @@ import logging
 import requests
 
 from saltext.vcf.clients import vro_orchestrator as c
-from saltext.vcf.modules import vcf_vro as vro_mod
 
 log = logging.getLogger(__name__)
 
