@@ -156,9 +156,7 @@ def wait_for_setup_ready(opts, timeout=1800, poll_interval=15, profile=None):
             )
         except requests.RequestException as exc:
             last_error = str(exc)
-            log.info(
-                "avi_controller.wait_for_setup_ready: %s: %s", host, exc
-            )
+            log.info("avi_controller.wait_for_setup_ready: %s: %s", host, exc)
         if time.monotonic() >= deadline:
             raise RuntimeError(
                 f"AVI Controller {host}: first-boot wizard not ready within "
@@ -234,9 +232,7 @@ def bootstrap_wizard(
         return r
 
     def _get(sess, path):
-        r = sess.get(
-            f"{base}{path}", headers={"Referer": base}, timeout=timeout, verify=verify
-        )
+        r = sess.get(f"{base}{path}", headers={"Referer": base}, timeout=timeout, verify=verify)
         r.raise_for_status()
         return r
 
@@ -301,9 +297,7 @@ def bootstrap_wizard(
     _patch(sess, backup_path, {"add": {"backup_passphrase": backup_passphrase}})
 
     # 8. Flip the welcome-workflow flag.
-    _patch(
-        sess, "/api/systemconfiguration", {"replace": {"welcome_workflow_complete": True}}
-    )
+    _patch(sess, "/api/systemconfiguration", {"replace": {"welcome_workflow_complete": True}})
 
     # Wizard has rotated the admin password and set the SSO/backup passphrase;
     # any cached session token from the pillar-driven client is now stale.

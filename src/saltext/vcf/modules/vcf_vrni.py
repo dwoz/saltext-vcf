@@ -240,9 +240,7 @@ def deploy(spec, profile=None):
     if collectors_spec:
         shared_secret = c.get_shared_secret(__opts__, profile=profile)
         for collector in collectors_spec:
-            collector_results.append(
-                deploy_collector(collector, shared_secret, profile=profile)
-            )
+            collector_results.append(deploy_collector(collector, shared_secret, profile=profile))
     return {
         "platform": platform_result,
         "shared_secret": shared_secret,

@@ -81,14 +81,10 @@ def installed(name, min_version=None, profile=None, deploy_spec=None):
             version = info.get("version") or info.get("api_version")
         if min_version and (version or "") < min_version:
             ret["result"] = False
-            ret["comment"] = (
-                f"VRNI Platform version {version!r} is below required {min_version!r}"
-            )
+            ret["comment"] = f"VRNI Platform version {version!r} is below required {min_version!r}"
             return ret
         if min_version:
-            ret["comment"] = (
-                f"VRNI Platform is installed at version {version} (>= {min_version})"
-            )
+            ret["comment"] = f"VRNI Platform is installed at version {version} (>= {min_version})"
         else:
             ret["comment"] = f"VRNI Platform is installed at version {version}"
         return ret

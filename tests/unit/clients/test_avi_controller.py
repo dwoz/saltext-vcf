@@ -114,9 +114,7 @@ def test_session_is_cached_across_calls(avi_opts, avi_authed):
     c.get_version(avi_opts)
     c.get_version(avi_opts)
     # /login should have fired exactly once.
-    login_calls = [
-        call for call in avi_authed.calls if call.request.url.endswith("/login")
-    ]
+    login_calls = [call for call in avi_authed.calls if call.request.url.endswith("/login")]
     assert len(login_calls) == 1
 
 
@@ -132,9 +130,7 @@ def test_list_clouds_unwraps_results(avi_opts, avi_authed):
 
 
 def test_list_clouds_empty_when_no_results(avi_opts, avi_authed):
-    avi_authed.add(
-        responses.GET, "https://alb.test/api/cloud", json={"results": []}, status=200
-    )
+    avi_authed.add(responses.GET, "https://alb.test/api/cloud", json={"results": []}, status=200)
     assert c.list_clouds(avi_opts) == []
 
 
@@ -191,12 +187,8 @@ def test_ping_false_on_connection_error(avi_opts, mocked_responses):
 
 def test_ping_false_on_http_error(avi_opts, avi_authed):
     """Auth OK but /api/initial-data 500 => ping False, no exception."""
-    avi_authed.add(
-        responses.GET, "https://alb.test/api/initial-data", status=500
-    )
-    avi_authed.add(
-        responses.GET, "https://alb.test/api/cluster/version", status=500
-    )
+    avi_authed.add(responses.GET, "https://alb.test/api/initial-data", status=500)
+    avi_authed.add(responses.GET, "https://alb.test/api/cluster/version", status=500)
     assert c.ping(avi_opts) is False
 
 
@@ -256,9 +248,7 @@ def test_invalidate_session_forces_relogin(avi_opts, avi_authed):
     c.get_version(avi_opts)
     avi_utils.invalidate_session(avi_opts)
     c.get_version(avi_opts)
-    login_calls = [
-        call for call in avi_authed.calls if call.request.url.endswith("/login")
-    ]
+    login_calls = [call for call in avi_authed.calls if call.request.url.endswith("/login")]
     assert len(login_calls) == 2
 
 
@@ -270,12 +260,8 @@ def test_invalidate_session_forces_relogin(avi_opts, avi_authed):
 def test_wait_for_setup_ready_succeeds_after_poll(avi_opts, mocked_responses, monkeypatch):
     """503, 503, 200 sequence => returns without raising."""
     monkeypatch.setattr("time.sleep", lambda _s: None)
-    mocked_responses.add(
-        responses.GET, "https://alb.test/api/initial-data", status=503
-    )
-    mocked_responses.add(
-        responses.GET, "https://alb.test/api/initial-data", status=503
-    )
+    mocked_responses.add(responses.GET, "https://alb.test/api/initial-data", status=503)
+    mocked_responses.add(responses.GET, "https://alb.test/api/initial-data", status=503)
     mocked_responses.add(
         responses.GET,
         "https://alb.test/api/initial-data",
@@ -284,8 +270,7 @@ def test_wait_for_setup_ready_succeeds_after_poll(avi_opts, mocked_responses, mo
     )
     c.wait_for_setup_ready(avi_opts, timeout=60, poll_interval=1)
     poll_calls = [
-        call for call in mocked_responses.calls
-        if call.request.url.endswith("/api/initial-data")
+        call for call in mocked_responses.calls if call.request.url.endswith("/api/initial-data")
     ]
     assert len(poll_calls) == 3
 
@@ -303,9 +288,7 @@ def test_wait_for_setup_ready_times_out(avi_opts, mocked_responses, monkeypatch)
     monkeypatch.setattr("time.sleep", lambda _s: None)
     monkeypatch.setattr("time.monotonic", _fake_monotonic)
     for _ in range(5):
-        mocked_responses.add(
-            responses.GET, "https://alb.test/api/initial-data", status=503
-        )
+        mocked_responses.add(responses.GET, "https://alb.test/api/initial-data", status=503)
     with pytest.raises(RuntimeError, match="first-boot wizard not ready"):
         c.wait_for_setup_ready(avi_opts, timeout=15, poll_interval=1)
 
@@ -354,6 +337,7 @@ def test_bootstrap_wizard_walks_expected_endpoints(avi_opts, mocked_responses):
 
     def _syscfg(request):
         import json as _json
+
         body = _json.loads(request.body)
         calls.append(("PATCH", "/api/systemconfiguration", list(body["replace"].keys())[0]))
         return (200, {}, "{}")
@@ -371,30 +355,42 @@ def test_bootstrap_wizard_walks_expected_endpoints(avi_opts, mocked_responses):
         return (200, {}, "{}")
 
     mocked_responses.add_callback(
-        responses.POST, "https://alb.test/login", callback=_login,
+        responses.POST,
+        "https://alb.test/login",
+        callback=_login,
         content_type="application/json",
     )
     mocked_responses.add_callback(
-        responses.PUT, "https://alb.test/api/useraccount", callback=_useraccount,
+        responses.PUT,
+        "https://alb.test/api/useraccount",
+        callback=_useraccount,
         content_type="application/json",
     )
     mocked_responses.add_callback(
-        responses.POST, "https://alb.test/login", callback=_login2,
+        responses.POST,
+        "https://alb.test/login",
+        callback=_login2,
         content_type="application/json",
     )
     # Three PATCH calls to /api/systemconfiguration (DNS, NTP, welcome).
     for _ in range(3):
         mocked_responses.add_callback(
-            responses.PATCH, "https://alb.test/api/systemconfiguration",
-            callback=_syscfg, content_type="application/json",
+            responses.PATCH,
+            "https://alb.test/api/systemconfiguration",
+            callback=_syscfg,
+            content_type="application/json",
         )
     mocked_responses.add_callback(
-        responses.GET, "https://alb.test/api/backupconfiguration",
-        callback=_get_backup, content_type="application/json",
+        responses.GET,
+        "https://alb.test/api/backupconfiguration",
+        callback=_get_backup,
+        content_type="application/json",
     )
     mocked_responses.add_callback(
-        responses.PATCH, "https://alb.test/api/backupconfiguration/backup-abc",
-        callback=_patch_backup, content_type="application/json",
+        responses.PATCH,
+        "https://alb.test/api/backupconfiguration/backup-abc",
+        callback=_patch_backup,
+        content_type="application/json",
     )
 
     result = c.bootstrap_wizard(
@@ -430,6 +426,7 @@ def test_configure_cluster_puts_nodes(avi_opts, avi_authed):
 
     def _capture(request):
         import json as _json
+
         captured["body"] = _json.loads(request.body)
         return (200, {}, "{}")
 
@@ -459,7 +456,6 @@ def test_configure_cluster_puts_nodes(avi_opts, avi_authed):
 
 
 def test_deploy_ova_dispatches_pyvmomi(monkeypatch):
-    from saltext.vcf.clients import avi_controller as ac
     from saltext.vcf.clients import ovf_deploy as ovf
 
     seen = {}
@@ -469,7 +465,7 @@ def test_deploy_ova_dispatches_pyvmomi(monkeypatch):
         return {"vm_name": kwargs["vm_name"], "powered_on": True}
 
     monkeypatch.setattr(ovf, "deploy_ova", _fake)
-    result = ac.deploy_ova(
+    result = c.deploy_ova(
         {
             "ova_url": "/tmp/avi.ova",
             "vm_name": "alb-1",
@@ -485,7 +481,6 @@ def test_deploy_ova_dispatches_pyvmomi(monkeypatch):
 
 
 def test_deploy_ova_dispatches_ovftool(monkeypatch):
-    from saltext.vcf.clients import avi_controller as ac
     from saltext.vcf.clients import ovftool_deploy as ot
 
     seen = {}
@@ -495,7 +490,7 @@ def test_deploy_ova_dispatches_ovftool(monkeypatch):
         return {"vm_name": kwargs["vm_name"]}
 
     monkeypatch.setattr(ot, "deploy_ova", _fake)
-    ac.deploy_ova(
+    c.deploy_ova(
         {
             "ova_url": "/tmp/avi.ova",
             "vm_name": "alb-1",
@@ -511,10 +506,8 @@ def test_deploy_ova_dispatches_ovftool(monkeypatch):
 
 
 def test_deploy_ova_rejects_unknown_backend():
-    from saltext.vcf.clients import avi_controller as ac
-
     with pytest.raises(ValueError, match="unsupported AVI deployment_backend"):
-        ac.deploy_ova(
+        c.deploy_ova(
             {
                 "ova_url": "/tmp/x.ova",
                 "vm_name": "n",

@@ -122,6 +122,7 @@ def deploy(spec, profile=None):
         ova_kwargs["extra_args"] = spec.get("ovftool_extra_args")
 
     from saltext.vcf.clients import ovf_deploy as _ovf
+
     _existing = _ovf.find_vm(
         target_host=ova_kwargs["target_host"],
         target_user=ova_kwargs["target_user"],
@@ -133,7 +134,9 @@ def deploy(spec, profile=None):
     if _existing is not None:
         log.info(
             "HCX VM %r already exists on %s (moid=%s); skipping OVA push",
-            ova_kwargs["vm_name"], ova_kwargs["target_host"], _existing["vm_moid"],
+            ova_kwargs["vm_name"],
+            ova_kwargs["target_host"],
+            _existing["vm_moid"],
         )
         deploy_result = {**_existing, "skipped_ova_push": True}
     else:
@@ -147,9 +150,9 @@ def deploy(spec, profile=None):
     # HCX 9.x admin-plane operations need the admin bearer token, which is
     # minted from admin_password (separate from the /hybridity session auth).
     # Read from spec or fall back to pillar saltext.vcf:hcx:password.
-    admin_pw = spec.get("admin_password") or __opts__.get(  # noqa: F821
-        "pillar", {}
-    ).get("saltext.vcf", {}).get("hcx", {}).get("password")
+    admin_pw = spec.get("admin_password") or __opts__.get("pillar", {}).get(  # noqa: F821
+        "saltext.vcf", {}
+    ).get("hcx", {}).get("password")
     activate_result = c.activate(
         __opts__,
         activation_key=spec.get("activation_key"),

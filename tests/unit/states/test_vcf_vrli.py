@@ -43,6 +43,7 @@ def vrli_opts():
 def _inject_opts(monkeypatch, vrli_opts):
     monkeypatch.setattr(vrli_state, "__opts__", vrli_opts, raising=False)
     monkeypatch.setattr(vrli_module, "__opts__", vrli_opts, raising=False)
+
     # The state now dispatches deploy via __salt__["vcf_vrli.deploy"] so Salt's
     # loader injects __opts__ into module functions. In unit tests we don't
     # have the loader — wire the dunder to look up the module function each

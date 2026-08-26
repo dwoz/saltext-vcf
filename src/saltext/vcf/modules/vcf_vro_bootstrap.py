@@ -135,13 +135,12 @@ def _ssh(host, password, cmd, timeout=60, check=True):
             capture_output=True,
             text=True,
             timeout=timeout,
+            check=False,
         )
     except subprocess.TimeoutExpired as exc:
         raise SshError(f"ssh timed out after {timeout}s: {cmd!r}") from exc
     if check and p.returncode != 0:
-        raise SshError(
-            f"ssh {host} {cmd!r} rc={p.returncode} stderr={p.stderr!r}"
-        )
+        raise SshError(f"ssh {host} {cmd!r} rc={p.returncode} stderr={p.stderr!r}")
     return p.returncode, p.stdout, p.stderr
 
 
@@ -149,8 +148,8 @@ def _put_file(host, password, content, remote_path, mode="0644"):
     """Push *content* to *remote_path* atomically."""
     quoted = shlex.quote(content)
     cmd = (
-        f"tmp=$(mktemp) && printf %s {quoted} > \"$tmp\" && "
-        f"chmod {mode} \"$tmp\" && mv \"$tmp\" {shlex.quote(remote_path)}"
+        f'tmp=$(mktemp) && printf %s {quoted} > "$tmp" && '
+        f'chmod {mode} "$tmp" && mv "$tmp" {shlex.quote(remote_path)}'
     )
     _ssh(host, password, cmd)
 
@@ -197,9 +196,7 @@ def fix_hosts(host=None, root_password=None):
     # Detect malformed line: something like
     #   "127.0.0.1 photon-<hex>127.0.0.1 vra-k8s.local"
     malformed = [i for i, ln in enumerate(lines) if ln.count("127.0.0.1") >= 2]
-    has_host_loopback = any(
-        ln.startswith("127.0.0.1") and hn in ln.split() for ln in lines
-    )
+    has_host_loopback = any(ln.startswith("127.0.0.1") and hn in ln.split() for ln in lines)
     has_host_primary = any(ip in ln.split() and hn in ln.split() for ln in lines)
 
     if not malformed and has_host_loopback and has_host_primary:
@@ -376,13 +373,12 @@ def rerun_firstboot(host=None, root_password=None, timeout=1800):
             check=False,
         )
         last_state = out.strip()
-        if "Result=success" in out and (
-            "SubState=exited" in out or "ActiveState=inactive" in out
-        ):
+        if "Result=success" in out and ("SubState=exited" in out or "ActiveState=inactive" in out):
             return {"changed": True, "reason": "firstboot completed successfully"}
         if "ActiveState=failed" in out:
             _, jc, _ = _ssh(
-                host, pw,
+                host,
+                pw,
                 "journalctl -u run-bootstrap.service --no-pager -n 40",
                 check=False,
             )
@@ -468,21 +464,23 @@ def ensure_envoy_dnat(host=None, root_password=None):
     changes = []
     if not _rule_present("PREROUTING", host_ip):
         _ssh(
-            host, pw,
+            host,
+            pw,
             f"iptables -t nat -I PREROUTING 1 -d {q_host_ip} -p tcp --dport 443 "
             f"-j DNAT --to-destination {q_target}",
         )
         changes.append(f"PREROUTING {host_ip}:443 -> {target}")
     if not _rule_present("OUTPUT", host_ip):
         _ssh(
-            host, pw,
+            host,
+            pw,
             f"iptables -t nat -I OUTPUT 1 -d {q_host_ip} -p tcp --dport 443 "
             f"-j DNAT --to-destination {q_target}",
         )
         changes.append(f"OUTPUT {host_ip}:443 -> {target}")
 
     # Persist via a systemd unit that re-applies on boot.
-    unit = f"""[Unit]
+    unit = """[Unit]
 Description=vRO envoy NodePort DNAT (managed by saltext.vcf.vcf_vro_bootstrap)
 After=kubelet.service network-online.target
 Wants=network-online.target
@@ -506,7 +504,12 @@ WantedBy=multi-user.target
     _, existing, _ = _ssh(host, pw, f"cat {unit_path} 2>/dev/null || true", check=False)
     if existing != unit:
         _put_file(host, pw, unit, unit_path, mode="0644")
-        _ssh(host, pw, "systemctl daemon-reload && systemctl enable vro-envoy-dnat.service", check=False)
+        _ssh(
+            host,
+            pw,
+            "systemctl daemon-reload && systemctl enable vro-envoy-dnat.service",
+            check=False,
+        )
         changes.append(f"installed {unit_path}")
 
     if not changes:
@@ -596,8 +599,8 @@ def remediate(host=None, root_password=None, verify_timeout=600, firstboot_timeo
         return {"ok": True, "steps": {}, "verify": v, "short_circuit": True}
 
     steps["fix_hosts"] = fix_hosts(host=host, root_password=root_password)
-    steps["disable_setup_kubernetes_firstboot"] = (
-        disable_setup_kubernetes_firstboot(host=host, root_password=root_password)
+    steps["disable_setup_kubernetes_firstboot"] = disable_setup_kubernetes_firstboot(
+        host=host, root_password=root_password
     )
     steps["rebootstrap_kubelet"] = rebootstrap_kubelet_if_notready(
         host=host, root_password=root_password

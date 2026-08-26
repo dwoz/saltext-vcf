@@ -296,9 +296,7 @@ def _read_ovf_descriptor(tar, members, max_disk_gib=None):
             f = tar.extractfile(m)
             if f is None:
                 raise RuntimeError(f"could not read {m.name!r} from OVA")
-            return _sanitize_ovf_descriptor(
-                f.read().decode("utf-8"), max_disk_gib=max_disk_gib
-            )
+            return _sanitize_ovf_descriptor(f.read().decode("utf-8"), max_disk_gib=max_disk_gib)
     raise RuntimeError("no .ovf descriptor found in OVA")
 
 
@@ -318,8 +316,7 @@ _STORAGE_GROUP_RE = re.compile(
 )
 _STORAGE_SECTION_RE = re.compile(
     # matches both self-closed and open/close forms
-    r"<vmw:StorageSection\b[^>]*/>\s*"
-    r"|<vmw:StorageSection\b[^>]*>.*?</vmw:StorageSection>\s*",
+    r"<vmw:StorageSection\b[^>]*/>\s*|<vmw:StorageSection\b[^>]*>.*?</vmw:StorageSection>\s*",
     re.DOTALL,
 )
 
@@ -358,6 +355,7 @@ def _sanitize_ovf_descriptor(xml, max_disk_gib=None):
         )
 
     if max_disk_gib is not None:
+
         def _clamp(match):
             head, cap, tail = match.group(1), int(match.group(2)), match.group(3)
             if cap > max_disk_gib:
@@ -527,9 +525,7 @@ def _upload_disks(
         is_vmdk = fi.path.lower().endswith(".vmdk")
         headers = {
             "Content-Type": (
-                "application/x-vnd.vmware-streamVmdk"
-                if is_vmdk
-                else "application/octet-stream"
+                "application/x-vnd.vmware-streamVmdk" if is_vmdk else "application/octet-stream"
             ),
             "Cookie": session_cookie,
             # ESXi's ha-nfc requires Overwrite even for the empty placeholder

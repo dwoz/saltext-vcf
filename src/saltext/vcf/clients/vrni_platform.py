@@ -258,6 +258,4 @@ def get_shared_secret(opts, profile=None, node_type="proxy"):
         results = body.get("results") or []
         if results and isinstance(results[0], dict) and results[0].get("secret"):
             return results[0]["secret"]
-    raise RuntimeError(
-        f"VRNI shared-secret response missing 'secret' field: {body!r}"
-    )
+    raise RuntimeError(f"VRNI shared-secret response missing 'secret' field: {body!r}")

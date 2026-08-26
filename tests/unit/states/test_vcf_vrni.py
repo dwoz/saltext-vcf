@@ -156,9 +156,7 @@ def test_installed_passes_profile_through(monkeypatch):
 
 def test_installed_present_noop(monkeypatch, deploy_spec):
     """When the Platform is reachable, deploy is NEVER attempted."""
-    monkeypatch.setattr(
-        c, "get_version", lambda o, profile=None: {"version": "6.14.0"}
-    )
+    monkeypatch.setattr(c, "get_version", lambda o, profile=None: {"version": "6.14.0"})
     called = {"deploy": 0}
     monkeypatch.setattr(
         mod,
@@ -171,9 +169,7 @@ def test_installed_present_noop(monkeypatch, deploy_spec):
     assert "6.14.0" in ret["comment"]
 
 
-def test_installed_absent_deploy_spec_test_mode_describes_plan(
-    monkeypatch, opts, deploy_spec
-):
+def test_installed_absent_deploy_spec_test_mode_describes_plan(monkeypatch, opts, deploy_spec):
     monkeypatch.setattr(c, "get_version", _conn_error)
     called = {"deploy": 0}
     monkeypatch.setattr(
@@ -219,9 +215,7 @@ def test_installed_absent_deploy_spec_real_mode(monkeypatch, deploy_spec):
         "complete_setup",
         lambda o, **kw: wizard_calls.append(kw) or {"status": "SETUP_COMPLETE"},
     )
-    monkeypatch.setattr(
-        c, "get_shared_secret", lambda o, profile=None: "sh4red-abc"
-    )
+    monkeypatch.setattr(c, "get_shared_secret", lambda o, profile=None: "sh4red-abc")
 
     ret = state.installed("vrni-prod", deploy_spec=deploy_spec)
     assert ret["result"] is True, ret

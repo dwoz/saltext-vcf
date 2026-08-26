@@ -27,7 +27,6 @@ states will land alongside their config-modules counterparts.
 import logging
 
 from saltext.vcf.clients import avi_controller as c
-from saltext.vcf.modules import vcf_avi as m
 
 log = logging.getLogger(__name__)
 
@@ -50,9 +49,7 @@ def _resolve_deploy_spec(deploy_spec, profile=None):
     root = pillar.get("saltext.vcf", {}) or {}
     avi_cfg = root.get("avi", {}) or {}
     if profile:
-        avi_cfg = (
-            root.get("profiles", {}).get(profile, {}).get("avi", avi_cfg)
-        )
+        avi_cfg = root.get("profiles", {}).get(profile, {}).get("avi", avi_cfg)
     return avi_cfg.get("deploy_spec")
 
 

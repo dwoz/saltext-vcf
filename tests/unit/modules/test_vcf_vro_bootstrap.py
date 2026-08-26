@@ -47,7 +47,11 @@ class FakeSsh:
 def fake_ssh(monkeypatch):
     ss = FakeSsh()
     monkeypatch.setattr(m, "_ssh", ss)
-    monkeypatch.setattr(m, "_put_file", lambda h, p, c, path, mode="0644": ss.calls.append((h, f"PUT {path} {len(c)}b {mode}")))
+    monkeypatch.setattr(
+        m,
+        "_put_file",
+        lambda h, p, c, path, mode="0644": ss.calls.append((h, f"PUT {path} {len(c)}b {mode}")),
+    )
     return ss
 
 
@@ -59,10 +63,7 @@ def test_fix_hosts_rewrites_malformed(fake_ssh):
     )
     fake_ssh.add(
         "cat /etc/hosts",
-        stdout=(
-            "127.0.0.1 localhost\n"
-            "127.0.0.1 photon-36f70c46116d127.0.0.1 vra-k8s.local\n"
-        ),
+        stdout=("127.0.0.1 localhost\n" "127.0.0.1 photon-36f70c46116d127.0.0.1 vra-k8s.local\n"),
     )
     r = m.fix_hosts()
     assert r["changed"] is True
@@ -75,11 +76,7 @@ def test_fix_hosts_noop_when_already_sane(fake_ssh):
     fake_ssh.add("ip -4 -o addr", stdout="25.0.3.189\n")
     fake_ssh.add(
         "cat /etc/hosts",
-        stdout=(
-            "127.0.0.1 vro-25-0-0-61\n"
-            "127.0.0.1 localhost\n"
-            "25.0.3.189 vro-25-0-0-61\n"
-        ),
+        stdout=("127.0.0.1 vro-25-0-0-61\n" "127.0.0.1 localhost\n" "25.0.3.189 vro-25-0-0-61\n"),
     )
     r = m.fix_hosts()
     assert r["changed"] is False
@@ -97,22 +94,19 @@ def test_disable_setup_kubernetes_noop_when_already_moved(fake_ssh):
         return (0, "", "")
 
     fake_ssh.__call__ = sc  # override
-    import saltext.vcf.modules.vcf_vro_bootstrap as mod
-    original = mod._ssh
-    mod._ssh = sc
+    original = m._ssh
+    m._ssh = sc
     try:
         r = m.disable_setup_kubernetes_firstboot()
     finally:
-        mod._ssh = original
+        m._ssh = original
     assert r["changed"] is False
     assert "already neutralised" in r["reason"]
 
 
 def test_rebootstrap_kubelet_noop_when_ready(fake_ssh):
     fake_ssh.add("test -f /etc/kubernetes/admin.conf", rc=0)
-    fake_ssh.add(
-        "kubectl", stdout="vro-25-0-0-61=True\n"
-    )
+    fake_ssh.add("kubectl", stdout="vro-25-0-0-61=True\n")
     r = m.rebootstrap_kubelet_if_notready()
     assert r["changed"] is False
     assert "Ready" in r["reason"]
@@ -145,14 +139,8 @@ def test_ensure_envoy_dnat_noop_when_rules_present(fake_ssh, monkeypatch):
         "-A OUTPUT -d 25.0.3.189/32 -p tcp -m tcp --dport 443 -j DNAT --to-destination 10.244.0.14:8443\n"
     )
     fake_ssh.add("iptables-save -t nat", stdout=existing_save)
-    # Unit file exact match so no rewrite. Read the module to get the exact rendered unit:
-    from saltext.vcf.modules import vcf_vro_bootstrap as mod
-
-    # We don't have easy access to the string without invoking; instead assert unit
-    # is written (changed=True path) is acceptable when hosts differ, so simulate
-    # a match: capture the unit render by having ensure_envoy_dnat detect
-    # "existing" == rendered_unit. Simpler: assert no iptables inserts happened.
-    r = m.ensure_envoy_dnat()
+    # Assert no iptables inserts happened (no rewrite path exercised here).
+    m.ensure_envoy_dnat()
     inserted = [c for c in fake_ssh.calls if "iptables -t nat -I" in c[1]]
     assert not inserted
 

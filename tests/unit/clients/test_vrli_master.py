@@ -24,7 +24,6 @@ import responses
 from saltext.vcf.clients import vrli_master
 from saltext.vcf.utils import vrli as vrli_utils
 
-
 VRLI_HOST = "vrli.test"
 VRLI_BASE = f"https://{VRLI_HOST}:9543"
 VRLI_SESSIONS_URL = f"{VRLI_BASE}/api/v2/sessions"
@@ -374,9 +373,7 @@ def _csrf_callback(request):
     return (200, {"X-CSRF-Token": "csrf-tok-xyz"}, '{"succ":true}')
 
 
-def test_bootstrap_master_fetches_csrf_then_login_then_startup(
-    vrli_opts, mocked_responses
-):
+def test_bootstrap_master_fetches_csrf_then_login_then_startup(vrli_opts, mocked_responses):
     """The 3-call CSRF form-encoded flow.
 
     Verifies:
@@ -455,9 +452,7 @@ def test_bootstrap_master_fetches_csrf_then_login_then_startup(
     assert "_eventName=newDeployment" in startup_body
 
 
-def test_bootstrap_master_rejects_local_authmethod_ambiguity(
-    vrli_opts, mocked_responses
-):
+def test_bootstrap_master_rejects_local_authmethod_ambiguity(vrli_opts, mocked_responses):
     """The wizard body MUST send ``authMethod=DEFAULT``, not ``Local``.
 
     The vRLI 9.0.2 appliance rejects ``authMethod=Local`` with
@@ -474,9 +469,7 @@ def test_bootstrap_master_rejects_local_authmethod_ambiguity(
         content_type="application/json",
     )
     mocked_responses.add(responses.POST, VRLI_LOGIN_URL, json={"succ": True}, status=200)
-    mocked_responses.add(
-        responses.POST, VRLI_STARTUP_URL, json={"succ": True}, status=200
-    )
+    mocked_responses.add(responses.POST, VRLI_STARTUP_URL, json={"succ": True}, status=200)
 
     vrli_master.bootstrap_master(vrli_opts, admin_password="pw")
 
@@ -504,9 +497,7 @@ def test_bootstrap_master_raises_when_csrf_header_and_cookie_both_missing(
         vrli_master.bootstrap_master(vrli_opts, admin_password="pw")
 
 
-def test_bootstrap_master_falls_back_to_cs_cookie_when_header_empty(
-    vrli_opts, mocked_responses
-):
+def test_bootstrap_master_falls_back_to_cs_cookie_when_header_empty(vrli_opts, mocked_responses):
     """VRLI 9.x sends the CSRF token in a ``cs`` cookie and returns an empty
     ``X-CSRF-Token`` header. The client must pick up the cookie value.
     """
@@ -523,9 +514,7 @@ def test_bootstrap_master_falls_back_to_cs_cookie_when_header_empty(
         },
     )
     mocked_responses.add(responses.POST, VRLI_LOGIN_URL, json={"succ": True}, status=200)
-    mocked_responses.add(
-        responses.POST, VRLI_STARTUP_URL, json={"succ": True}, status=200
-    )
+    mocked_responses.add(responses.POST, VRLI_STARTUP_URL, json={"succ": True}, status=200)
     result = vrli_master.bootstrap_master(vrli_opts, admin_password="pw")
     assert result["csrf_token"] == "cookie-tok-9x"
 
@@ -564,7 +553,9 @@ def test_reset_admin_password_via_ssh_invokes_sshpass_correctly(monkeypatch):
     monkeypatch.setattr(
         vrli_master.shutil, "which", lambda name: "/usr/bin/sshpass" if name == "sshpass" else None
     )
-    fake_run = MagicMock(return_value=subprocess.CompletedProcess(args=[], returncode=0, stdout="", stderr=""))
+    fake_run = MagicMock(
+        return_value=subprocess.CompletedProcess(args=[], returncode=0, stdout="", stderr="")
+    )
     monkeypatch.setattr(vrli_master.subprocess, "run", fake_run)
 
     ok = vrli_master.reset_admin_password_via_ssh(
@@ -600,7 +591,9 @@ def test_reset_admin_password_via_ssh_invokes_sshpass_correctly(monkeypatch):
 
 def test_reset_admin_password_via_ssh_honours_custom_user_and_timeout(monkeypatch):
     monkeypatch.setattr(vrli_master.shutil, "which", lambda name: "/usr/local/bin/sshpass")
-    fake_run = MagicMock(return_value=subprocess.CompletedProcess(args=[], returncode=0, stdout="", stderr=""))
+    fake_run = MagicMock(
+        return_value=subprocess.CompletedProcess(args=[], returncode=0, stdout="", stderr="")
+    )
     monkeypatch.setattr(vrli_master.subprocess, "run", fake_run)
 
     vrli_master.reset_admin_password_via_ssh(

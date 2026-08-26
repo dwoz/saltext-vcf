@@ -85,9 +85,7 @@ def get_token(opts, profile=None):
             if isinstance(body, dict):
                 token = body.get("hcspAuthorization") or body.get("token")
     if not token:
-        raise RuntimeError(
-            f"HCX Manager {host}: sessions POST returned no {_AUTH_HEADER} token"
-        )
+        raise RuntimeError(f"HCX Manager {host}: sessions POST returned no {_AUTH_HEADER} token")
     _TOKEN_CACHE[cache_key] = token
     return token
 
@@ -125,9 +123,7 @@ def api_get(opts, path, params=None, profile=None, timeout=30):
 
 def api_post(opts, path, body=None, params=None, profile=None, timeout=60):
     session, host = _session(opts, profile=profile)
-    resp = session.post(
-        f"https://{host}{path}", json=body, params=params, timeout=timeout
-    )
+    resp = session.post(f"https://{host}{path}", json=body, params=params, timeout=timeout)
     resp.raise_for_status()
     if resp.content:
         return resp.json()

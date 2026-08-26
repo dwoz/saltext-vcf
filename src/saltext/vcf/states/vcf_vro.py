@@ -103,9 +103,8 @@ def installed(name, version=None, profile=None, deploy_spec=None):
             ret["changes"] = {"plan": plan}
             return ret
         ret["result"] = None
-        ret["comment"] = (
-            f"Would verify VCF Orchestrator {name!r} is installed"
-            + (f" at version {version}" if version else "")
+        ret["comment"] = f"Would verify VCF Orchestrator {name!r} is installed" + (
+            f" at version {version}" if version else ""
         )
         return ret
 
@@ -128,9 +127,8 @@ def installed(name, version=None, profile=None, deploy_spec=None):
                 "Upgrade or redeploy VRO out of band and re-run."
             )
             return ret
-        ret["comment"] = (
-            f"VCF Orchestrator {name!r} is installed"
-            + (f" at version {about.get('version')}" if about.get("version") else " and reachable")
+        ret["comment"] = f"VCF Orchestrator {name!r} is installed" + (
+            f" at version {about.get('version')}" if about.get("version") else " and reachable"
         )
         return ret
 

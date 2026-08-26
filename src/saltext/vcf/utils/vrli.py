@@ -118,9 +118,7 @@ def _acquire_token(cfg):
     body = resp.json() or {}
     session_id = body.get("sessionId")
     if not session_id:
-        raise RuntimeError(
-            f"vRLI POST /api/v2/sessions did not return sessionId: {body!r}"
-        )
+        raise RuntimeError(f"vRLI POST /api/v2/sessions did not return sessionId: {body!r}")
     ttl = int(body.get("ttl", 1800))
     return {
         "token": session_id,
@@ -137,9 +135,7 @@ def get_token(opts, profile=None):
     """
     cfg = get_config(opts, profile=profile)
     if not cfg["host"]:
-        raise RuntimeError(
-            "saltext.vcf.vrli.host is not configured; cannot reach vRLI master"
-        )
+        raise RuntimeError("saltext.vcf.vrli.host is not configured; cannot reach vRLI master")
     if not cfg["verify_ssl"]:
         urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 

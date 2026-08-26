@@ -113,6 +113,7 @@ def deploy(spec, profile=None):
         salt '*' vcf_avi.deploy spec="{...}"
     """
     from saltext.vcf.clients import ovf_deploy as _ovf
+
     _existing = _ovf.find_vm(
         target_host=spec["target_host"],
         target_user=spec["target_user"],
@@ -124,7 +125,9 @@ def deploy(spec, profile=None):
     if _existing is not None:
         log.info(
             "AVI VM %r already exists on %s (moid=%s); skipping OVA push",
-            spec["vm_name"], spec["target_host"], _existing["vm_moid"],
+            spec["vm_name"],
+            spec["target_host"],
+            _existing["vm_moid"],
         )
         deploy_result = {**_existing, "skipped_ova_push": True}
     else:

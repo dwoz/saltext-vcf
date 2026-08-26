@@ -94,7 +94,6 @@ import logging
 import requests
 
 from saltext.vcf.clients import vrli_master
-from saltext.vcf.modules import vcf_vrli as vrli_module
 
 log = logging.getLogger(__name__)
 
@@ -211,9 +210,7 @@ def installed(name, version=None, deploy_spec=None, profile=None):
         return ret
     except requests.exceptions.RequestException as exc:
         ret["result"] = False
-        ret["comment"] = (
-            f"{name}: vRLI deploy failed talking to master API: {exc}"
-        )
+        ret["comment"] = f"{name}: vRLI deploy failed talking to master API: {exc}"
         return ret
 
     ret["changes"] = {

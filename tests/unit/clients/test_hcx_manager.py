@@ -16,7 +16,6 @@ import responses
 from saltext.vcf.clients import hcx_manager
 from saltext.vcf.utils import hcx as hcx_utils
 
-
 _SESSIONS_URL = "https://hcx.test/hybridity/api/sessions"
 _ABOUT_URL = "https://hcx.test/hybridity/api/about"
 _SITES_URL = "https://hcx.test/hybridity/api/cloudConfigs"
@@ -211,7 +210,9 @@ _ADMIN_CERTS_URL = "https://hcx.test:9443/api/admin/certificates"
 _ADMIN_APPLIANCE_CFG_URL = "https://hcx.test:9443/api/admin/global/config/applianceConfiguration"
 
 
-def test_wait_for_setup_ready_succeeds_on_endpointInfo_2xx(hcx_opts, mocked_responses, monkeypatch):
+def test_wait_for_setup_ready_succeeds_on_endpoint_info_2xx(
+    hcx_opts, mocked_responses, monkeypatch
+):
     """503 -> 503 -> 200 XML: returns even when the body isn't JSON."""
     sleeps = []
     monkeypatch.setattr("saltext.vcf.clients.hcx_manager.time.sleep", sleeps.append)
@@ -226,9 +227,7 @@ def test_wait_for_setup_ready_succeeds_on_endpointInfo_2xx(hcx_opts, mocked_resp
         body="<?xml version='1.0'?><com.vmware.vchs.hybridity.protocol.RestResponse><success>true</success></com.vmware.vchs.hybridity.protocol.RestResponse>",
         content_type="application/xml",
     )
-    result = hcx_manager.wait_for_setup_ready(
-        hcx_opts, timeout=60, poll_interval=1
-    )
+    result = hcx_manager.wait_for_setup_ready(hcx_opts, timeout=60, poll_interval=1)
     assert result["status"] == 200
     # Slept twice (after first two 503s), not after the successful one.
     assert sleeps == [1.0, 1.0]
@@ -238,9 +237,7 @@ def test_wait_for_setup_ready_times_out(hcx_opts, mocked_responses, monkeypatch)
     sleeps = []
     monkeypatch.setattr("saltext.vcf.clients.hcx_manager.time.sleep", sleeps.append)
     times = iter([1000.0, 1000.0, 9999.0, 9999.0, 9999.0])
-    monkeypatch.setattr(
-        "saltext.vcf.clients.hcx_manager.time.monotonic", lambda: next(times)
-    )
+    monkeypatch.setattr("saltext.vcf.clients.hcx_manager.time.monotonic", lambda: next(times))
     mocked_responses.add(responses.GET, _ENDPOINT_INFO_URL, status=503, body="warming up")
     with pytest.raises(TimeoutError, match="not ready within"):
         hcx_manager.wait_for_setup_ready(hcx_opts, timeout=10, poll_interval=1)
@@ -356,15 +353,13 @@ def test_configure_vcenter_cert_trust_dance_on_400(hcx_opts, mocked_responses):
     assert result["vcenter"] is True
     assert result["applianceConfiguration"] is True
     # Certificate POST body carries the base64 blob from the first 400.
-    cert_call = [
-        c for c in mocked_responses.calls
-        if c.request.url == _ADMIN_CERTS_URL
-    ][0]
+    cert_call = [c for c in mocked_responses.calls if c.request.url == _ADMIN_CERTS_URL][0]
     assert b"BASE64-CERT-BLOB" in cert_call.request.body
 
 
 def test_configure_vcenter_base64_encodes_password(hcx_opts, mocked_responses):
     import base64
+
     mocked_responses.add(
         responses.POST,
         _ADMIN_LOGIN_URL,
@@ -383,9 +378,6 @@ def test_configure_vcenter_base64_encodes_password(hcx_opts, mocked_responses):
         vcenter_password="raw-pw",
         admin_password="admin-pw",
     )
-    vc_call = [
-        c for c in mocked_responses.calls
-        if c.request.url == _ADMIN_VCENTER_URL
-    ][0]
+    vc_call = [c for c in mocked_responses.calls if c.request.url == _ADMIN_VCENTER_URL][0]
     expected_b64 = base64.b64encode(b"raw-pw").decode()
     assert expected_b64.encode() in vc_call.request.body

@@ -79,8 +79,7 @@ def installed(name, version=None, profile=None):
     result["api_version"] = about.get("api-version") or about.get("apiVersion")
     if version is not None and result["version"] != version:
         result["reason"] = (
-            f"VRO version mismatch: expected {version!r}, "
-            f"reported {result['version']!r}"
+            f"VRO version mismatch: expected {version!r}, " f"reported {result['version']!r}"
         )
         return result
     result["installed"] = True
@@ -147,6 +146,7 @@ def deploy(
         salt '*' vcf_vro.deploy '{...}'
     """
     from saltext.vcf.clients import ovf_deploy as _ovf
+
     _vc_creds = (spec.get("esxi_hosts") or [{}])[0]
     _existing = _ovf.find_vm(
         target_host=spec["installer_deploy_esxi"],
@@ -159,7 +159,9 @@ def deploy(
     if _existing is not None:
         log.info(
             "vRO VM %r already exists on %s (moid=%s); skipping OVA push",
-            spec["installer_vm_name"], spec["installer_deploy_esxi"], _existing["vm_moid"],
+            spec["installer_vm_name"],
+            spec["installer_deploy_esxi"],
+            _existing["vm_moid"],
         )
         ova_result = {**_existing, "skipped_ova_push": True}
     else:

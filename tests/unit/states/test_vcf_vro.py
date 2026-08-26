@@ -49,9 +49,7 @@ def test_installed_success_no_version_required(monkeypatch):
 
 def test_installed_is_idempotent(monkeypatch):
     """Two back-to-back calls produce identical no-op returns."""
-    monkeypatch.setattr(
-        c, "get_version", lambda o, profile=None: {"version": "9.0.0"}
-    )
+    monkeypatch.setattr(c, "get_version", lambda o, profile=None: {"version": "9.0.0"})
     first = vro_state.installed("vro-prod")
     second = vro_state.installed("vro-prod")
     assert first == second
@@ -143,17 +141,13 @@ def _deploy_spec(license_key=None):
 
 def test_installed_present_noop(monkeypatch):
     """Already reachable → no OVA push, no changes."""
-    monkeypatch.setattr(
-        c, "get_version", lambda o, profile=None: {"version": "9.0.0"}
-    )
+    monkeypatch.setattr(c, "get_version", lambda o, profile=None: {"version": "9.0.0"})
 
     def _fail(*a, **kw):
         raise AssertionError("deploy() should not be invoked when appliance is reachable")
 
     monkeypatch.setattr(vro_mod, "deploy", _fail)
-    ret = vro_state.installed(
-        "vro-prod", deploy_spec=_deploy_spec(license_key="XYZ")
-    )
+    ret = vro_state.installed("vro-prod", deploy_spec=_deploy_spec(license_key="XYZ"))
     assert ret["result"] is True
     assert ret["changes"] == {}
     assert "installed" in ret["comment"]
@@ -176,9 +170,7 @@ def test_installed_absent_deploy_spec_test_mode(monkeypatch, vro_opts):
 
     monkeypatch.setattr(vro_mod, "deploy", _fail)
 
-    ret = vro_state.installed(
-        "vro-prod", deploy_spec=_deploy_spec(license_key="LK-1")
-    )
+    ret = vro_state.installed("vro-prod", deploy_spec=_deploy_spec(license_key="LK-1"))
     assert ret["result"] is None
     assert "Would deploy" in ret["comment"]
     assert "esxi-01.test" in ret["comment"]
@@ -191,6 +183,7 @@ def test_installed_absent_deploy_spec_test_mode(monkeypatch, vro_opts):
 
 def test_installed_absent_deploy_spec_real_mode(monkeypatch):
     """Unreachable + deploy_spec → full deploy chain runs, changes reported."""
+
     # First get_version raises (unreachable). We drive the deploy chain
     # via monkeypatching the module.deploy() as a single unit so we can
     # assert exactly what the state does with its return value.
@@ -256,6 +249,7 @@ def test_installed_absent_deploy_spec_real_mode_full_chain(monkeypatch):
     monkeypatch.setattr(c, "get_version", _get_version)
     # Stub the find_vm check so we don't try to open a real vCenter session.
     from saltext.vcf.clients import ovf_deploy as _ovf
+
     monkeypatch.setattr(_ovf, "find_vm", lambda **kw: None)
     monkeypatch.setattr(
         vro_mod.ia_client,
@@ -281,9 +275,7 @@ def test_installed_absent_deploy_spec_real_mode_full_chain(monkeypatch):
     # Skip any real sleeping inside wait_for_setup_ready.
     monkeypatch.setattr("saltext.vcf.clients.vro_orchestrator.time.sleep", lambda _s: None)
 
-    ret = vro_state.installed(
-        "vro-prod", deploy_spec=_deploy_spec(license_key="LK-9")
-    )
+    ret = vro_state.installed("vro-prod", deploy_spec=_deploy_spec(license_key="LK-9"))
     assert ret["result"] is True
     assert ret["changes"] == {"deployed": "9.0.0"}
     assert sso_calls == [
@@ -298,6 +290,7 @@ def test_installed_absent_deploy_spec_real_mode_full_chain(monkeypatch):
 
 def test_installed_absent_no_deploy_spec_fails(monkeypatch):
     """Unreachable + no deploy_spec → result=False with actionable comment."""
+
     def _unreachable(_opts, profile=None):
         raise requests.exceptions.ConnectionError("host down")
 
@@ -323,9 +316,7 @@ def test_installed_absent_deploy_spec_from_pillar(monkeypatch, vro_opts):
     monkeypatch.setattr(
         c,
         "get_version",
-        lambda o, profile=None: (_ for _ in ()).throw(
-            requests.exceptions.ConnectionError("boot")
-        ),
+        lambda o, profile=None: (_ for _ in ()).throw(requests.exceptions.ConnectionError("boot")),
     )
 
     called = {}

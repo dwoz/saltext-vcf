@@ -157,18 +157,14 @@ def api_get(opts, path, params=None, profile=None, timeout=None):
 
 
 def api_post(opts, path, body=None, params=None, profile=None, timeout=None):
-    resp = _request(
-        "POST", opts, path, json=body, params=params, profile=profile, timeout=timeout
-    )
+    resp = _request("POST", opts, path, json=body, params=params, profile=profile, timeout=timeout)
     if resp.content:
         return resp.json()
     return {}
 
 
 def api_put(opts, path, body=None, params=None, profile=None, timeout=None):
-    resp = _request(
-        "PUT", opts, path, json=body, params=params, profile=profile, timeout=timeout
-    )
+    resp = _request("PUT", opts, path, json=body, params=params, profile=profile, timeout=timeout)
     if resp.content:
         return resp.json()
     return {}

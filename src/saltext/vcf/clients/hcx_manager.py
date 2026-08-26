@@ -208,10 +208,10 @@ def activate(opts, activation_key=None, profile=None, timeout=60, admin_password
         info = sess.get(f"{base}{_ADMIN_APPLIANCE_INFO}", timeout=timeout).json()
         lic = sess.get(f"{base}{_ADMIN_LICENSES}", timeout=timeout).json()
         return {
-            "activationType": (info.get("data", {}).get("items", [{}])[0]
-                              .get("config", {}).get("activationType")),
-            "licenseStatus": lic.get("licenseStatus")
-                             or lic.get("data", {}).get("licenseStatus"),
+            "activationType": (
+                info.get("data", {}).get("items", [{}])[0].get("config", {}).get("activationType")
+            ),
+            "licenseStatus": lic.get("licenseStatus") or lic.get("data", {}).get("licenseStatus"),
             "already_activated": True,  # evaluation mode counts as usable
         }
     finally:
@@ -260,9 +260,7 @@ def configure_vcenter(
         # caller sees a stable "already done" result.
         already = sess.get(f"{base}{_ADMIN_APPLIANCE_CFG}", timeout=timeout)
         if already.status_code == 200 and already.json() is True:
-            log.info(
-                "hcx_manager.configure_vcenter: applianceConfiguration=true already; skipping"
-            )
+            log.info("hcx_manager.configure_vcenter: applianceConfiguration=true already; skipping")
             existing = sess.get(f"{base}{_ADMIN_VCENTER}", timeout=timeout)
             return {
                 "vcenter": True,
@@ -279,9 +277,9 @@ def configure_vcenter(
                         "config": {
                             "url": vcenter_url,
                             "userName": vcenter_username,
-                            "password": base64.b64encode(
-                                vcenter_password.encode("utf-8")
-                            ).decode("ascii"),
+                            "password": base64.b64encode(vcenter_password.encode("utf-8")).decode(
+                                "ascii"
+                            ),
                         },
                     }
                 ]

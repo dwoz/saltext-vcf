@@ -37,7 +37,9 @@ def test_short_circuit_when_already_serving(monkeypatch):
             "verify": {"ok": True, "status_code": 200, "version": "9.0.2"},
         }
 
-    monkeypatch.setattr(s, "__salt__", {"vcf_vro_bootstrap.remediate": fake_remediate}, raising=False)
+    monkeypatch.setattr(
+        s, "__salt__", {"vcf_vro_bootstrap.remediate": fake_remediate}, raising=False
+    )
     r = s.remediate("vro")
     assert r["result"] is True
     assert r["changes"] == {}
@@ -56,7 +58,9 @@ def test_remediation_success_reports_fired_steps(monkeypatch):
             "verify": {"ok": True, "status_code": 200, "version": "9.0.2.0.25676793"},
         }
 
-    monkeypatch.setattr(s, "__salt__", {"vcf_vro_bootstrap.remediate": fake_remediate}, raising=False)
+    monkeypatch.setattr(
+        s, "__salt__", {"vcf_vro_bootstrap.remediate": fake_remediate}, raising=False
+    )
     r = s.remediate("vro")
     assert r["result"] is True
     assert "2/3 steps fired" in r["comment"]
@@ -74,10 +78,17 @@ def test_remediation_failure_reports_verify_error(monkeypatch):
             "steps": {
                 "fix_hosts": {"changed": True, "reason": "rewrote"},
             },
-            "verify": {"ok": False, "status_code": None, "version": None, "error": "ConnectionError"},
+            "verify": {
+                "ok": False,
+                "status_code": None,
+                "version": None,
+                "error": "ConnectionError",
+            },
         }
 
-    monkeypatch.setattr(s, "__salt__", {"vcf_vro_bootstrap.remediate": fake_remediate}, raising=False)
+    monkeypatch.setattr(
+        s, "__salt__", {"vcf_vro_bootstrap.remediate": fake_remediate}, raising=False
+    )
     r = s.remediate("vro")
     assert r["result"] is False
     assert "not 200" in r["comment"]

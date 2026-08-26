@@ -28,7 +28,6 @@ import logging
 import requests
 
 from saltext.vcf.clients import hcx_manager as c
-from saltext.vcf.modules import vcf_hcx as m
 
 log = logging.getLogger(__name__)
 
@@ -117,9 +116,7 @@ def installed(name, version=None, profile=None, deploy_spec=None):
         if version and observed != version:
             if __opts__.get("test"):  # noqa: F821
                 ret["result"] = None
-                ret["comment"] = (
-                    f"HCX Manager {name!r} at {observed!r}, would require {version!r}"
-                )
+                ret["comment"] = f"HCX Manager {name!r} at {observed!r}, would require {version!r}"
                 return ret
             ret["result"] = False
             ret["comment"] = (
@@ -131,9 +128,8 @@ def installed(name, version=None, profile=None, deploy_spec=None):
         if __opts__.get("test"):  # noqa: F821
             ret["comment"] = f"HCX Manager {name!r} reachable at version {observed!r}"
             return ret
-        ret["comment"] = (
-            f"HCX Manager {name!r} already installed"
-            + (f" at version {observed}" if observed else "")
+        ret["comment"] = f"HCX Manager {name!r} already installed" + (
+            f" at version {observed}" if observed else ""
         )
         return ret
 
@@ -179,7 +175,9 @@ def installed(name, version=None, profile=None, deploy_spec=None):
     # Post-deploy verification — use the admin-plane applianceConfiguration
     # check (same reason as the fast-path: /hybridity/api/about needs SSO).
     try:
-        c.wait_for_setup_ready(__opts__, timeout=60, poll_interval=10, profile=profile)  # noqa: F821
+        c.wait_for_setup_ready(
+            __opts__, timeout=60, poll_interval=10, profile=profile
+        )  # noqa: F821
         if _admin_pw:
             _sess, _base = c._admin_login(  # pylint: disable=protected-access
                 __opts__, _admin_pw, profile=profile, timeout=30  # noqa: F821
@@ -195,9 +193,7 @@ def installed(name, version=None, profile=None, deploy_spec=None):
             about = {"applianceConfiguration": None}
     except (requests.RequestException, RuntimeError, TimeoutError) as exc:
         ret["result"] = False
-        ret["comment"] = (
-            f"HCX Manager {name!r} deployed but post-deploy probe failed: {exc}"
-        )
+        ret["comment"] = f"HCX Manager {name!r} deployed but post-deploy probe failed: {exc}"
         return ret
 
     observed = _version(about)
@@ -219,8 +215,7 @@ def installed(name, version=None, profile=None, deploy_spec=None):
         "activate": deploy_result.get("activate"),
         "vcenter": deploy_result.get("vcenter"),
     }
-    ret["comment"] = (
-        f"HCX Manager {name!r} deployed"
-        + (f" at version {observed}" if observed else "")
+    ret["comment"] = f"HCX Manager {name!r} deployed" + (
+        f" at version {observed}" if observed else ""
     )
     return ret

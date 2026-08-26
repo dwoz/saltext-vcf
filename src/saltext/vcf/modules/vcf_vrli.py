@@ -171,7 +171,7 @@ def _push_ova(spec):
     ``vami.VMware_vCenter_Log_Insight.ip0``); bare keys are silently
     dropped by the OVF importer. See notes.
     """
-    deploy = _select_backend(spec.get("deployment_backend"))
+    push_backend = _select_backend(spec.get("deployment_backend"))
     ova_source = spec.get("ova_source") or spec.get("ova_url")
     if not ova_source:
         raise KeyError("vRLI deploy spec missing required 'ova_source' (or 'ova_url')")
@@ -206,10 +206,12 @@ def _push_ova(spec):
         log.info(
             "vRLI VM %r already exists on %s (moid=%s); skipping OVA push, "
             "will drive wizard only",
-            kwargs["vm_name"], kwargs["target_host"], existing["vm_moid"],
+            kwargs["vm_name"],
+            kwargs["target_host"],
+            existing["vm_moid"],
         )
         return {**existing, "skipped_ova_push": True}
-    return deploy(**kwargs)
+    return push_backend(**kwargs)
 
 
 def deploy(spec, profile=None):
@@ -296,9 +298,7 @@ def deploy(spec, profile=None):
     try:
         version = vrli_master.get_version(__opts__, profile=profile)
     except (requests.RequestException, RuntimeError) as exc:
-        log.warning(
-            "vRLI deploy: post-bootstrap /api/v2/version probe failed: %s", exc
-        )
+        log.warning("vRLI deploy: post-bootstrap /api/v2/version probe failed: %s", exc)
         version = None
 
     return {

@@ -45,7 +45,8 @@ def test_module_installed_returns_true_when_about_succeeds(monkeypatch):
     result = mod.installed("hcx.test")
     assert result["installed"] is True
     assert result["version"] == "4.9.0"
-    assert result["about"]["buildVersion"] == "4.9.0"
+    about = result["about"] or {}
+    assert about["buildVersion"] == "4.9.0"
 
 
 def test_module_installed_returns_false_on_connection_error(monkeypatch):
@@ -95,8 +96,10 @@ class _FakeAdminSess:
             def __init__(self, ac):
                 self.status_code = 200
                 self._ac = ac
+
             def json(self):
                 return self._ac
+
         return R(self._ac)
 
     def close(self):
@@ -142,6 +145,7 @@ def test_installed_present_noop(monkeypatch, inject_opts):
 
 def test_installed_absent_no_deploy_spec_fails(monkeypatch):
     """Unreachable + no deploy spec = clear failure comment."""
+
     def _boom(o, profile=None):
         raise requests.ConnectionError("network down")
 
@@ -198,8 +202,9 @@ def test_installed_absent_deploy_spec_real_mode(monkeypatch, inject_opts):
             "vcenter": {"vcenter": True, "applianceConfiguration": True},
         }
 
-    monkeypatch.setattr("saltext.vcf.states.vcf_hcx.__salt__",
-                       {"vcf_hcx.deploy": _deploy}, raising=False)
+    monkeypatch.setattr(
+        "saltext.vcf.states.vcf_hcx.__salt__", {"vcf_hcx.deploy": _deploy}, raising=False
+    )
 
     spec = {
         "ova_url": "https://example.test/hcx.ova",

@@ -13,7 +13,6 @@ import responses
 from saltext.vcf.clients import vrni_platform as c
 from saltext.vcf.utils import vrni
 
-
 _VRNI_HOST = "vrni.test"
 _TOKEN_URL = f"https://{_VRNI_HOST}/api/ni/auth/token"
 
@@ -82,18 +81,14 @@ def test_get_token_raises_when_response_missing_token(vrni_opts, mocked_response
 
 def test_401_triggers_token_refresh_and_retry(vrni_opts, mocked_responses):
     # First auth
-    mocked_responses.add(
-        responses.POST, _TOKEN_URL, json={"token": "tok-1"}, status=200
-    )
+    mocked_responses.add(responses.POST, _TOKEN_URL, json={"token": "tok-1"}, status=200)
     # Version call: first 401, then 200 after refresh
     mocked_responses.add(
         responses.GET,
         f"https://{_VRNI_HOST}/api/ni/info/version",
         status=401,
     )
-    mocked_responses.add(
-        responses.POST, _TOKEN_URL, json={"token": "tok-2"}, status=200
-    )
+    mocked_responses.add(responses.POST, _TOKEN_URL, json={"token": "tok-2"}, status=200)
     mocked_responses.add(
         responses.GET,
         f"https://{_VRNI_HOST}/api/ni/info/version",
@@ -122,8 +117,7 @@ def test_get_version_returns_body_and_uses_bearer(vrni_opts, vrni_authed):
     result = c.get_version(vrni_opts)
     assert result == {"version": "6.14.0", "api_version": "1.5.0"}
     ver_call = [
-        call for call in vrni_authed.calls
-        if call.request.url.endswith("/api/ni/info/version")
+        call for call in vrni_authed.calls if call.request.url.endswith("/api/ni/info/version")
     ][-1]
     assert ver_call.request.headers["Authorization"] == "NetworkInsight vrni-tok-abc"
 
@@ -257,6 +251,7 @@ def test_wait_for_setup_ready_polls_and_succeeds(vrni_opts, monkeypatch):
 
 def test_wait_for_setup_ready_times_out(vrni_opts, monkeypatch):
     """Raises TimeoutError once the deadline elapses."""
+
     def _boom(*_a, **_kw):
         raise c.requests.ConnectionError("no route to host")
 

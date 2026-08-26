@@ -176,9 +176,7 @@ def test_wait_for_setup_ready_times_out(vro_opts, mocked_responses, monkeypatch)
     # Fake a monotonic that jumps forward on every call so the deadline
     # trips immediately without any real sleeping.
     ticks = iter([0.0, 0.0, 5.0, 100.0, 200.0])
-    monkeypatch.setattr(
-        "saltext.vcf.clients.vro_orchestrator.time.monotonic", lambda: next(ticks)
-    )
+    monkeypatch.setattr("saltext.vcf.clients.vro_orchestrator.time.monotonic", lambda: next(ticks))
     monkeypatch.setattr("saltext.vcf.clients.vro_orchestrator.time.sleep", lambda _s: None)
 
     with pytest.raises(TimeoutError) as excinfo:

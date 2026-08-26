@@ -88,8 +88,7 @@ def remediate(name, host=None, root_password=None, verify_timeout=600, firstboot
 
     if result.get("short_circuit"):
         ret["comment"] = (
-            f"vRO {name!r} already serving /vco/api/about "
-            f"(version={verify.get('version')!r})"
+            f"vRO {name!r} already serving /vco/api/about " f"(version={verify.get('version')!r})"
         )
         return ret
 

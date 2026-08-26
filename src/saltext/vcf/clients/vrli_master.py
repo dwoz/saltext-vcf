@@ -50,7 +50,6 @@ import urllib3
 
 from saltext.vcf.utils import vrli
 
-
 log = logging.getLogger(__name__)
 
 
@@ -96,9 +95,7 @@ def _wizard_base_url(opts, profile=None):
     """
     cfg = vrli.get_config(opts, profile=profile)
     if not cfg["host"]:
-        raise RuntimeError(
-            "saltext.vcf.vrli.host is not configured; cannot reach vRLI master"
-        )
+        raise RuntimeError("saltext.vcf.vrli.host is not configured; cannot reach vRLI master")
     return f"https://{cfg['host']}:{cfg['port']}", cfg["verify_ssl"]
 
 
@@ -219,10 +216,7 @@ def bootstrap_master(opts, admin_password, profile=None, timeout=600):
         timeout=timeout,
     )
     csrf_resp.raise_for_status()
-    token = (
-        csrf_resp.headers.get("X-CSRF-Token")
-        or session.cookies.get("cs")
-    )
+    token = csrf_resp.headers.get("X-CSRF-Token") or session.cookies.get("cs")
     if not token:
         raise RuntimeError(
             f"vRLI wizard GET {_CSRF_PATH} did not return X-CSRF-Token header or cs cookie "

@@ -116,9 +116,7 @@ def api_get(opts, path, params=None, profile=None):
 
 def api_post(opts, path, body=None, params=None, profile=None):
     session, host = _session(opts, profile=profile)
-    resp = session.post(
-        f"https://{host}{path}", json=body, params=params, timeout=60
-    )
+    resp = session.post(f"https://{host}{path}", json=body, params=params, timeout=60)
     resp.raise_for_status()
     if resp.content:
         return resp.json()

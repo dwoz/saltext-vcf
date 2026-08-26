@@ -78,9 +78,7 @@ def _inject_opts(monkeypatch, avi_opts):
 
 
 def test_module_get_version_delegates(monkeypatch):
-    monkeypatch.setattr(
-        c, "get_version", lambda o, profile=None: {"Version": "22.1.3"}
-    )
+    monkeypatch.setattr(c, "get_version", lambda o, profile=None: {"Version": "22.1.3"})
     assert mod.get_version() == {"Version": "22.1.3"}
 
 
@@ -90,9 +88,7 @@ def test_module_ping_true(monkeypatch):
 
 
 def test_module_installed_success(monkeypatch):
-    monkeypatch.setattr(
-        c, "get_version", lambda o, profile=None: {"Version": "22.1.3", "build": 9}
-    )
+    monkeypatch.setattr(c, "get_version", lambda o, profile=None: {"Version": "22.1.3", "build": 9})
     result = mod.installed(name="alb-prod")
     assert result == {
         "installed": True,
@@ -115,6 +111,7 @@ def test_module_installed_swallows_error(monkeypatch):
 def _stub_find_vm_absent(monkeypatch):
     """Common mock: no existing VM on target, so deploy proceeds to push."""
     from saltext.vcf.clients import ovf_deploy as _ovf
+
     monkeypatch.setattr(_ovf, "find_vm", lambda **kw: None)
 
 
@@ -172,9 +169,7 @@ def test_module_deploy_includes_cluster_when_requested(monkeypatch):
     calls = []
     _stub_find_vm_absent(monkeypatch)
     monkeypatch.setattr(c, "deploy_ova", lambda spec: {})
-    monkeypatch.setattr(
-        c, "wait_for_setup_ready", lambda *a, **kw: None
-    )
+    monkeypatch.setattr(c, "wait_for_setup_ready", lambda *a, **kw: None)
     monkeypatch.setattr(c, "bootstrap_wizard", lambda *a, **kw: {})
     monkeypatch.setattr(
         c,
@@ -263,7 +258,10 @@ def test_installed_absent_deploy_spec_real_mode(monkeypatch, avi_opts_with_deplo
     monkeypatch.setattr(
         c,
         "deploy_ova",
-        lambda spec: (order.append(("deploy_ova", spec.get("vm_name"))), {"vm_name": spec["vm_name"]})[1],
+        lambda spec: (
+            order.append(("deploy_ova", spec.get("vm_name"))),
+            {"vm_name": spec["vm_name"]},
+        )[1],
     )
     monkeypatch.setattr(
         c,
@@ -275,7 +273,9 @@ def test_installed_absent_deploy_spec_real_mode(monkeypatch, avi_opts_with_deplo
     monkeypatch.setattr(
         c,
         "bootstrap_wizard",
-        lambda opts, **kw: (order.append(("bootstrap_wizard", kw["new_password"])), {"ok": True})[1],
+        lambda opts, **kw: (order.append(("bootstrap_wizard", kw["new_password"])), {"ok": True})[
+            1
+        ],
     )
     monkeypatch.setattr(
         c,
@@ -319,7 +319,9 @@ def test_installed_deploy_spec_arg_overrides_pillar(monkeypatch):
     monkeypatch.setattr(
         mod,
         "deploy",
-        lambda spec, profile=None: (captured.update(spec=spec), {"version": {"Version": "22.1.3"}})[1],
+        lambda spec, profile=None: (captured.update(spec=spec), {"version": {"Version": "22.1.3"}})[
+            1
+        ],
     )
     ret = state.installed(
         "alb-prod",
