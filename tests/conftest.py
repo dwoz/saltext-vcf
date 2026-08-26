@@ -53,6 +53,24 @@ def opts():
                     "domain": "System Domain",
                     "verify_ssl": False,
                 },
+                "vmsp": {
+                    "host": "vmsp.test",
+                    "username": "admin@vsp.local",
+                    "password": "p",
+                    "verify_ssl": False,
+                },
+                "vrli": {
+                    "host": "vrli.test",
+                    "port": 9543,
+                    "username": "admin",
+                    "password": "p",
+                    "verify_ssl": False,
+                    "ssh": {
+                        "host": "vrli.test",
+                        "username": "root",
+                        "password": "p",
+                    },
+                },
                 "profiles": {
                     "alt": {
                         "vcenter": {
@@ -105,11 +123,14 @@ def reset_caches():
     from saltext.vcf.utils import cim
     from saltext.vcf.utils import esxi
     from saltext.vcf.utils import installer
+    from saltext.vcf.utils import pbm
     from saltext.vcf.utils import sddc
     from saltext.vcf.utils import vcenter
     from saltext.vcf.utils import vcfa
     from saltext.vcf.utils import vcfops
     from saltext.vcf.utils import vim as soap
+    from saltext.vcf.utils import vmsp
+    from saltext.vcf.utils import vrli
     from saltext.vcf.utils import vsan
 
     caches = [
@@ -121,7 +142,10 @@ def reset_caches():
         soap._SI_CACHE,
         cim._CONN_CACHE,
         vsan._VSAN_STUB_CACHE,
+        pbm._PBM_STUB_CACHE,
         vcfa._TOKEN_CACHE,
+        vmsp._TOKEN_CACHE,
+        vrli._TOKEN_CACHE,
     ]
     for c in caches:
         c.clear()
@@ -137,6 +161,18 @@ def vcenter_authed(mocked_responses):
         responses_lib.POST,
         "https://vc.test/api/session",
         json="session-token-abc",
+        status=200,
+    )
+    return mocked_responses
+
+
+@pytest.fixture
+def vmsp_authed(mocked_responses):
+    """Pre-register the VMSP identity token POST so clients can authenticate."""
+    mocked_responses.add(
+        responses_lib.POST,
+        "https://vmsp.test/api/v1/identity/token",
+        json={"access_token": "vmsp-token-abc"},
         status=200,
     )
     return mocked_responses
@@ -173,6 +209,18 @@ def vcfops_authed(mocked_responses):
         responses_lib.POST,
         "https://ops.test/suite-api/api/auth/token/acquire",
         json={"token": "ops-tok-abc", "validity": 1736294400000},
+        status=200,
+    )
+    return mocked_responses
+
+
+@pytest.fixture
+def vrli_authed(mocked_responses):
+    """Pre-register the vRLI ``/api/v2/sessions`` POST."""
+    mocked_responses.add(
+        responses_lib.POST,
+        "https://vrli.test:9543/api/v2/sessions",
+        json={"userId": "u1", "sessionId": "vrli-tok-abc", "ttl": 1800},
         status=200,
     )
     return mocked_responses

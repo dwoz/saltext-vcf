@@ -11,12 +11,15 @@ ______________
 
     cluster_config
     cluster_config_software
+    esxi_ad_auth
     esxi_advanced
+    esxi_auth_proxy
     esxi_firewall
     esxi_host
     esxi_ntp
     esxi_service
     esxi_syslog
+    esxi_vlcm
     fleet_password
     installer_bringup
     nsx_cluster
@@ -40,11 +43,13 @@ ______________
     nsx_lb_virtual_server
     nsx_nat
     nsx_node
+    nsx_node_services
     nsx_qos_profile
     nsx_role_binding
     nsx_security_policy
     nsx_segment
     nsx_service
+    nsx_telemetry
     nsx_tier0
     nsx_tier1
     nsx_transport_node
@@ -62,6 +67,7 @@ ______________
     sddc_license_keys
     sddc_manager
     sddc_network_pools
+    sddc_personalities
     sddc_releases
     sddc_system
     sddc_tasks
@@ -69,18 +75,27 @@ ______________
     sddc_users
     sddc_vcenters
     sddc_vcf_services
+    vc_patch
+    vccluster_resource_pool
+    vcenter_ad_domain
+    vcenter_advanced_option
     vcenter_appliance
+    vcenter_appliances
     vcenter_cluster
     vcenter_compute_policy
     vcenter_content_library
+    vcenter_custom_attribute
     vcenter_datacenter
     vcenter_datastore
+    vcenter_dvs_nioc
+    vcenter_dvs_nioc_vccluster
     vcenter_folder
     vcenter_host
     vcenter_kms
     vcenter_lcm_depot
     vcenter_network
     vcenter_resource_pool
+    vcenter_shell
     vcenter_sso
     vcenter_storage_policy
     vcenter_supervisor
@@ -182,6 +197,10 @@ ______________
     vim_vm_power
     vim_vm_snapshot
     vim_vm_tools
+    vrli_ad
+    vrli_certificate
+    vrli_settings
+    vrli_version
     vsan_cluster
     vsan_disk
     vsan_fault_domain

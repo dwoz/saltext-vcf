@@ -11,12 +11,15 @@ _________________
 
     vcf_cluster_config
     vcf_cluster_config_software
+    vcf_esxi_ad_auth
     vcf_esxi_advanced
+    vcf_esxi_auth_proxy
     vcf_esxi_firewall
     vcf_esxi_host
     vcf_esxi_ntp
     vcf_esxi_service
     vcf_esxi_syslog
+    vcf_esxi_vlcm
     vcf_fleet_password
     vcf_installer_bringup
     vcf_nsx_cluster
@@ -35,11 +38,13 @@ _________________
     vcf_nsx_lb
     vcf_nsx_nat
     vcf_nsx_node
+    vcf_nsx_node_services
     vcf_nsx_qos_profile
     vcf_nsx_role_binding
     vcf_nsx_security_policy
     vcf_nsx_segment
     vcf_nsx_service
+    vcf_nsx_telemetry
     vcf_nsx_tier0
     vcf_nsx_tier1
     vcf_nsx_transport_node
@@ -53,11 +58,13 @@ _________________
     vcf_sddc_host
     vcf_sddc_manager
     vcf_sddc_network_pools
+    vcf_sddc_personalities
     vcf_sddc_releases
     vcf_sddc_system
     vcf_sddc_upgrades
     vcf_sddc_vcenters
     vcf_sddc_workload_domain
+    vcf_vc_patch
     vcf_vcenter_appliance
     vcf_vcenter_cluster
     vcf_vcenter_compute_policy
@@ -172,6 +179,10 @@ _________________
     vcf_vim_vm_snapshot
     vcf_vim_vm_tools
     vcf_vks
+    vcf_vrli_ad
+    vcf_vrli_certificate
+    vcf_vrli_settings
+    vcf_vrli_version
     vcf_vsan_cluster
     vcf_vsan_disk
     vcf_vsan_fault_domain

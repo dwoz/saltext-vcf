@@ -10,23 +10,41 @@ _____________
     :toctree:
 
     vcf_cluster_config
+    vcf_esxi_ad_auth
     vcf_esxi_advanced
+    vcf_esxi_auth_proxy
     vcf_esxi_firewall
     vcf_esxi_host
     vcf_esxi_ntp
     vcf_esxi_service
     vcf_esxi_syslog
+    vcf_esxi_vlcm
     vcf_installer_bringup
+    vcf_nsx_cluster_vip
     vcf_nsx_firewall_rule
     vcf_nsx_group
+    vcf_nsx_node_services
     vcf_nsx_role_binding
     vcf_nsx_security_policy
     vcf_nsx_segment
     vcf_nsx_service
+    vcf_nsx_telemetry
+    vcf_nsx_tier0
+    vcf_nsx_tier1
     vcf_sddc_host
+    vcf_vc_patch
+    vcf_vccluster_resource_pool
+    vcf_vcenter_ad_domain
+    vcf_vcenter_advanced_option
     vcf_vcenter_appliance
+    vcf_vcenter_appliances
     vcf_vcenter_cluster
+    vcf_vcenter_content_library
+    vcf_vcenter_custom_attribute
+    vcf_vcenter_dvs_nioc
+    vcf_vcenter_dvs_nioc_vccluster
     vcf_vcenter_host
+    vcf_vcenter_shell
     vcf_vcenter_supervisor_service
     vcf_vcenter_vm_class
     vcf_vcf_services
@@ -55,5 +73,8 @@ _____________
     vcf_vim_role
     vcf_vim_scheduled_task
     vcf_vim_vm_devices
+    vcf_vrli_ad
+    vcf_vrli_certificate
+    vcf_vrli_settings
     vcf_vsan_cluster
     vcf_vsan_fault_domain

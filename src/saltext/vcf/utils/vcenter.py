@@ -21,6 +21,7 @@ Config is read from Salt opts/pillar under ``saltext.vcf.vcenter``:
 """
 
 import logging
+import time
 
 import requests
 import urllib3
@@ -103,6 +104,27 @@ def _session(opts, profile=None):
     return get_session(opts, profile=profile)
 
 
+def _raise_for_status(resp):
+    """Raise ``requests.HTTPError`` that includes the vCenter response body.
+
+    ``requests``' own ``raise_for_status`` discards the response body, which for
+    the vCenter REST API is exactly where the actionable error lives (e.g. which
+    required field is missing on a 400). We attach the body to the message while
+    preserving ``exc.response`` so callers can still branch on ``status_code``.
+    """
+    if resp.status_code < 400:
+        return
+    try:
+        detail = resp.text
+    except Exception:  # pylint: disable=broad-except
+        detail = "<unreadable response body>"
+    method = resp.request.method if resp.request is not None else "?"
+    raise requests.HTTPError(
+        f"{resp.status_code} {resp.reason} for {method} {resp.url}: {detail}",
+        response=resp,
+    )
+
+
 def api_get(opts, path, params=None, profile=None, timeout=None):
     """GET ``/api/<path>`` from vCenter and return parsed JSON.
 
@@ -112,7 +134,7 @@ def api_get(opts, path, params=None, profile=None, timeout=None):
     session, host = _session(opts, profile=profile)
     url = f"https://{host}{path}"
     resp = session.get(url, params=params, timeout=_resolve_timeout(opts, profile, timeout))
-    resp.raise_for_status()
+    _raise_for_status(resp)
     if resp.content:
         return resp.json()
     return {}
@@ -129,7 +151,7 @@ def api_post(opts, path, body=None, params=None, profile=None, timeout=None):
     resp = session.post(
         url, json=body, params=params, timeout=_resolve_timeout(opts, profile, timeout)
     )
-    resp.raise_for_status()
+    _raise_for_status(resp)
     if resp.content:
         return resp.json()
     return {}
@@ -140,7 +162,7 @@ def api_patch(opts, path, body=None, profile=None, timeout=None):
     session, host = _session(opts, profile=profile)
     url = f"https://{host}{path}"
     resp = session.patch(url, json=body, timeout=_resolve_timeout(opts, profile, timeout))
-    resp.raise_for_status()
+    _raise_for_status(resp)
     if resp.content:
         return resp.json()
     return {}
@@ -151,16 +173,54 @@ def api_put(opts, path, body=None, profile=None, timeout=None):
     session, host = _session(opts, profile=profile)
     url = f"https://{host}{path}"
     resp = session.put(url, json=body, timeout=_resolve_timeout(opts, profile, timeout))
-    resp.raise_for_status()
+    _raise_for_status(resp)
     if resp.content:
         return resp.json()
     return {}
 
 
-def api_delete(opts, path, profile=None, timeout=None):
+def api_delete(opts, path, params=None, profile=None, timeout=None):
     """DELETE a resource from vCenter."""
     session, host = _session(opts, profile=profile)
     url = f"https://{host}{path}"
-    resp = session.delete(url, timeout=_resolve_timeout(opts, profile, timeout))
-    resp.raise_for_status()
+    resp = session.delete(url, params=params, timeout=_resolve_timeout(opts, profile, timeout))
+    _raise_for_status(resp)
     return {}
+
+
+def wait_for_task(opts, task_id, timeout=1800, poll_interval=10, profile=None):
+    """Block until vCenter CIS task *task_id* reaches a terminal state.
+
+    Polls ``GET /api/cis/tasks/{task_id}`` until ``status`` is
+    ``SUCCEEDED``/``SUCCESS`` (returns the final task dict) or
+    ``FAILED``/``CANCELED``/``CANCELLED`` (raises ``RuntimeError`` with the
+    task payload attached). Raises ``TimeoutError`` if *timeout* elapses
+    first. Generic to any vCenter API that returns a CIS task id (e.g.
+    ``?vmw-task=true`` responses).
+
+    ``vmw-task=true`` only *requests* async execution — vAPI operations may
+    still complete synchronously and never create a task at all, in which
+    case ``task_id`` is actually the caller's direct result (e.g. a draft
+    id), not a task reference. A 404 on the very first lookup is treated as
+    "ran synchronously, nothing to wait for" rather than an error; a 404
+    after the task was previously seen running is a real failure and still
+    raises.
+    """
+    deadline = time.monotonic() + timeout
+    task = {}
+    seen_task = False
+    while time.monotonic() < deadline:
+        try:
+            task = api_get(opts, f"/api/cis/tasks/{task_id}", profile=profile)
+        except requests.HTTPError as exc:
+            if not seen_task and exc.response is not None and exc.response.status_code == 404:
+                return {"status": "SUCCEEDED", "task_id": task_id, "synchronous": True}
+            raise
+        seen_task = True
+        status = task.get("status")
+        if status in ("SUCCEEDED", "SUCCESS"):
+            return task
+        if status in ("FAILED", "CANCELED", "CANCELLED"):
+            raise RuntimeError(f"task {task_id} ended {status!r}: {task}")
+        time.sleep(poll_interval)
+    raise TimeoutError(f"task {task_id} did not complete within {timeout}s: {task}")

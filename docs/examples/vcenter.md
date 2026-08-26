@@ -76,3 +76,80 @@ salt-call vcf_vcenter_kms.list_
 salt-call vcf_vcenter_kms.get my-kms
 salt-call vcf_vcenter_kms.create '{"provider":"my-kms","type":"NATIVE", ...}'
 ```
+
+## ESXi Lifecycle (vLCM patching)
+
+Patch ESXi hosts in a vSphere cluster: depot → desired image → policy →
+compliance/precheck/stage/remediate. Same `vcenter` pillar connection as
+the rest of this page — no separate credentials needed.
+
+```bash
+salt-call vcf_esxi_vlcm.offline_depot_create '{"location": "http://repo.example.com/depot.zip"}'
+salt-call vcf_esxi_vlcm.depot_sync
+
+salt-call vcf_esxi_vlcm.desired_image_get domain-c9
+salt-call vcf_esxi_vlcm.draft_import_software_spec domain-c9 '{"base_image": {"version": "9.2.0.0.25504872"}}'
+salt-call vcf_esxi_vlcm.draft_commit domain-c9 draft-1
+
+salt-call vcf_esxi_vlcm.compliance_scan domain-c9
+salt-call vcf_esxi_vlcm.remediate domain-c9
+```
+
+Declaratively, via `vcf_esxi_vlcm` states:
+
+```yaml
+patch-depot:
+  vcf_esxi_vlcm.depot_configured:
+    - location: http://repo.example.com/VMware-ESXi-9.2.0.0.25504872-depot.zip
+
+domain-c9:
+  vcf_esxi_vlcm.image_configured:
+    - image_spec:
+        base_image:
+          version: "9.2.0.0.25504872"
+    - require:
+      - vcf_esxi_vlcm: patch-depot
+  vcf_esxi_vlcm.remediated:
+    - require:
+      - vcf_esxi_vlcm.image_configured: domain-c9
+```
+
+## VC Patch (VCSA self-update)
+
+Patches the vCenter Server Appliance itself via its VAMI appliance-update
+API — a distinct workflow from ESXi/NSX/SDDC Manager patching. Same
+`vcenter` pillar connection as the rest of this page.
+
+```bash
+salt-call vcf_vc_patch.get_update_policy
+salt-call vcf_vc_patch.list_pending_updates
+
+# Stage without monitoring on flaky links, then poll separately
+salt-call vcf_vc_patch.stage 9.0.1.0.12345 monitor=false
+salt-call vcf_vc_patch.get_update_status
+salt-call vcf_vc_patch.get_staged_update
+
+# Install (requires the SSO admin password)
+salt-call vcf_vc_patch.install 9.0.1.0.12345 'VMware123!VMware123!'
+```
+
+Declaratively, via `vcf_vc_patch` states:
+
+```yaml
+vc-repo:
+  vcf_vc_patch.repository_configured:
+    - repository_url: http://repo.example.com/vcsa/
+
+vc-staged:
+  vcf_vc_patch.update_prepared:
+    - version: "9.0.1.0.12345"
+    - require:
+      - vcf_vc_patch: vc-repo
+
+vc-installed:
+  vcf_vc_patch.update_installed:
+    - version: "9.0.1.0.12345"
+    - sso_password: {{ pillar['vc_sso_password'] }}
+    - require:
+      - vcf_vc_patch: vc-staged
+```
